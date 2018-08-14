@@ -1,5 +1,5 @@
-# Store Delivery System Simulator
-# Purpose
+# Multi-Threaded Store Delivery System Simulator
+## Purpose
 Originally this simulator was created as a homework assignment for CS665, it has since been modified with the intent of learning more about Thread Pools and the Builder Pattern.  A menu system was added which, among other things (see below) gives the ability to specify the number of threads used by the delivery driver thread pool.
 
 Allowing the number of threads to be changed at run time, allowed me to explore performance differences based on the number of threads used. In the program's original implementation each delivery driver was created on their own thread, now a pool of threads is shared among the drivers.
@@ -7,7 +7,7 @@ Allowing the number of threads to be changed at run time, allowed me to explore 
 A "semi-scientific" suit of tests showed that reducing the amount of threads to .5% of the amount of delivery drivers (so 10 threads for 2000 drivers) resulted in a 130% reduction in memory used, with only a 10% increase in the time it took the program to complete!
 
 In addition to thread pools, the builder pattern was implemented to make the creation of store objects far less complex. 
-# Implementation 
+## Implementation 
 This multi-threaded complete simulator is a complex simulation that is highly scalable, with the ability to automatically generate all the objects needed at run time.
 
 ## General Design
