@@ -14,10 +14,10 @@ public class SystemStores {
 
     private static SystemStores storesInstance; //singleton instance
 
-    private SystemStores() {
-    } //prevent external construction
 
-    private List<Store> stores = new ArrayList<>(); //list to hold all of our stores
+
+
+    private List<Store> stores; //list to hold all of our stores
 
     /**
      * Add a store to the system
@@ -26,6 +26,10 @@ public class SystemStores {
      */
     public void addStore(Store store) {
         stores.add(store);
+    }
+    //prevent external construction
+    private SystemStores() {
+        stores= new ArrayList<>();
     }
 
     /**

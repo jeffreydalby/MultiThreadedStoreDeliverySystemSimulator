@@ -82,14 +82,15 @@ public class PrimarySimulator {
 
         //we always create one driver with a heater and a cooler to make sure we have that
         deliveryDriver = new DeliveryDriver(peopleNameGenerator.getName(), Address.getRandomGridPoint(),true,true);
-        //start him up and add to handles list
-        driverHandles.add(scheduler.scheduleAtFixedRate(deliveryDriver,100,500,MILLISECONDS));
+        Display.outputWithSeparator("Created new driver: \n" + deliveryDriver.toString());
+        //start them up and add to handles list
+        driverHandles.add(scheduler.scheduleAtFixedRate(deliveryDriver,500,100,MILLISECONDS));
         //Display.outputWithSeparator("Created new driver: " +deliveryDriver );
 
         for (int i = 0; i < numDrivers -1 ; i++) {
             deliveryDriver = new DeliveryDriver(peopleNameGenerator.getName(), Address.getRandomGridPoint(),hasHeater,hasCooler);
             //start our driver going and add to handles list
-            driverHandles.add(scheduler.scheduleAtFixedRate(deliveryDriver,500,1000,MILLISECONDS));
+            driverHandles.add(scheduler.scheduleAtFixedRate(deliveryDriver,500,100,MILLISECONDS));
             //get new randoms for next time around
             hasCooler = rnd.nextInt(10) < 3;
             hasHeater = rnd.nextInt(10) < 3;

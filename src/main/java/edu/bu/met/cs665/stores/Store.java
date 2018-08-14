@@ -76,35 +76,45 @@ public class Store {
 
     public static class StoreBuilder{
 
-        Store returnStore = new Store();
+        private String name;
+        private Point location;
+        private String address;
+        List<StoreTypes.Type> storeClassifications = new ArrayList<>();
+
         public StoreBuilder withName(String name) {
-            returnStore.setName(name);
+            this.name = name;
             return this;
         }
 
 
         public StoreBuilder withLocation(Point location) {
-            returnStore.setLocation(location);
+           this.location = location;
             return this;
         }
 
 
         public StoreBuilder withAddress(String address) {
-            returnStore.setAddress(address);
+            this.address = address;
             return this;
         }
 
 
         public StoreBuilder withStoreClassificationList(List<StoreTypes.Type> storeClassifications) {
-            returnStore.setStoreClassification(storeClassifications);
+            this.storeClassifications = storeClassifications;
             return this;
         }
 
 
         public Store build() {
-            if (!returnStore.storeClassification.isEmpty())
-                returnStore.setStockItems(getMenuItems(returnStore.storeClassification));
-            return returnStore;
+            Store builtStore = new Store();
+            builtStore.setStoreClassification(storeClassifications);
+            if (!builtStore.storeClassification.isEmpty())
+                builtStore.setStockItems(getMenuItems(this.storeClassifications));
+
+            builtStore.setAddress(this.address);
+            builtStore.setName(this.name);
+            builtStore.setLocation(this.location);
+            return builtStore;
         }
 
 

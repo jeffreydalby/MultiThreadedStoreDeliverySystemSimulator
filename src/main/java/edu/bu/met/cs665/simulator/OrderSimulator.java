@@ -97,16 +97,22 @@ public class OrderSimulator implements Runnable {
 
             //randomly decide if it is the persons birthday 20% .
             isBirthday = rnd.nextInt(10) < 2;
-            if (isBirthday) {
+            if (isBirthday && !customer.isBirthDay()) {
                 //Add a gift box, making sure that we have one in the list of items to add
                 if (orderItems.stream().anyMatch(item->item.getProductName().equals(ProductNames.Names.giftBox))) {
                     Product giftBox =orderItems.stream().filter(item -> item.getProductName().equals(ProductNames.Names.giftBox)).findFirst().orElse(null);
                     if (giftBox != null) {
                         giftBox.setQuantity(1);
                         order.addItem(giftBox);
+
                     }
                 }
                 customer.setBirthDay(true);
+
+            }
+            else if(isBirthday && customer.isBirthDay())
+            {
+                customer.setNote("Customer already received gift box with previous order.");
             }
 
             //add a random number of things to the order up

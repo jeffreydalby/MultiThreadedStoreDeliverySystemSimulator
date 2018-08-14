@@ -44,6 +44,11 @@ public class Delivery {
         this.refergerated = refergerated;
     }
 
+
+    public int getOrderSubmittedTime() {
+        return orderSubmittedTime;
+    }
+
     Order getOrder() {
         return order;
     }
@@ -53,6 +58,8 @@ public class Delivery {
     private boolean delivered;
     private DeliveryDriver driver;
     private int pickupTime;
+
+
     private int orderSubmittedTime; //just using an int to represent time
     private int deliveryTime;
     private boolean refergerated;

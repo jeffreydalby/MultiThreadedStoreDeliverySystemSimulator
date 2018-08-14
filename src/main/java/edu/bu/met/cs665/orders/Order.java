@@ -82,6 +82,11 @@ public class Order {
         returnString.append("Customer's Birthday Today: ");
         returnString.append(this.customer.isBirthDay());
         returnString.append("\n");
+        if (!this.customer.getNote().equals("")){
+        returnString.append("Note: ");
+        returnString.append(this.customer.getNote());
+        returnString.append("\n");
+        }
 
 
         String prefix = "";

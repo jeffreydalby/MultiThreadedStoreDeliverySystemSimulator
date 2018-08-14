@@ -12,7 +12,7 @@ import java.awt.*;
 public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
 
     //how many city block should the driver be able to move per clock tick
-    private static final int BLOCKS_PER_TICK = 300;
+    private static final int BLOCKS_PER_ITERATION = 10;
 
     public Point getCurrentLocation() {
         return currentLocation;
@@ -78,27 +78,32 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
     @Override
     public void updateDelivery(Delivery delivery) {
 
+        if(delivery != null) {
+            this.available = false;
+            this.currentDelivery = delivery;
+            this.distanceToStore = (int) Distances.getDistanceBetweenPoints(this.currentLocation, delivery.getOrder().getStore().getLocation());
+            this.distanceStoreToCustomer = (int) Distances.getDistanceBetweenPoints(delivery.getOrder().getStore().getLocation(), delivery.getOrder().getCustomer().getLocation());
+            this.pickingUp = true;
 
-        this.available = false;
-        this.currentDelivery = delivery;
-        this.distanceToStore = (int) Distances.getDistanceBetweenPoints(this.currentLocation, delivery.getOrder().getStore().getLocation());
-        this.distanceStoreToCustomer = (int) Distances.getDistanceBetweenPoints(delivery.getOrder().getStore().getLocation(), delivery.getOrder().getCustomer().getLocation());
-        this.pickingUp = true;
-
-        Display.outputWithSeparator("Order Accepted"
-                + "\nDriver: " + this.driverName
-                + "\nPicking up Order #" + delivery.getOrder().getOrderNumber()
-                + "\nRefrigerated due to traffic: " + this.currentDelivery.getRefergerated()
-                + "\nFrom: " + delivery.getOrder().getStore().getName()
-                + "\nAt: " + delivery.getOrder().getStore().getAddress()
-                + "\nFor: " + delivery.getOrder().getCustomer().getCustomerName()
-                + "\nAt: " + delivery.getOrder().getCustomer().getAddress()
-                + "\nEstimated Total distance: " + (this.distanceToStore + this.distanceStoreToCustomer));
+            Display.outputWithSeparator("Order Accepted"
+                    + "\nDriver: " + this.driverName
+                    + "\nPicking up Order #" + delivery.getOrder().getOrderNumber()
+                    + "\nRefrigerated due to traffic: " + this.currentDelivery.getRefergerated()
+                    + "\nFrom: " + delivery.getOrder().getStore().getName()
+                    + "\nAt: " + delivery.getOrder().getStore().getAddress()
+                    + "\nFor: " + delivery.getOrder().getCustomer().getCustomerName()
+                    + "\nAt: " + delivery.getOrder().getCustomer().getAddress()
+                    + "\nEstimated Total distance: " + (this.distanceToStore + this.distanceStoreToCustomer));
+        }
+        else {
+            System.out.println("Delivery null!!");
+        }
     }
 
     @Override
     public void updateStatus() {
-        Display.outputWithSeparator("Driver Status: \n" + this.toString());
+        if(this.currentDelivery != null)
+            Display.outputWithSeparator("Driver Status: \n" + this.toString());
     }
 
     /**
@@ -118,14 +123,18 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
                     moveTowardCustomer();
                 }
             }
+            ///something went wrong
+            if(!available && this.currentDelivery == null){
+                Display.output("This driver lost their order!");
+            }
     }
 
     /**
      * Move driver toward customer
      */
     private void moveTowardCustomer() {
-        distanceStoreToCustomer -= BLOCKS_PER_TICK; //reduce by BLOCKS_PER_TICK
-        distanceTravelled += BLOCKS_PER_TICK; //Keep track of how far we have gone
+        distanceStoreToCustomer -= BLOCKS_PER_ITERATION; //reduce by BLOCKS_PER_ITERATION
+        distanceTravelled += BLOCKS_PER_ITERATION; //Keep track of how far we have gone
         //if the distance to store <= 0 we are at the customer;
         if (distanceStoreToCustomer <= 0) {
             this.deliverOrder();  //deliver the order and reset for the next one
@@ -137,8 +146,8 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
      */
     private void moveTowardStore() {
 
-        distanceToStore -= BLOCKS_PER_TICK; //reduce by BLOCKS_PER_TICK
-        distanceTravelled += BLOCKS_PER_TICK; //Keep track of how far we have gone
+        distanceToStore -= BLOCKS_PER_ITERATION; //reduce by BLOCKS_PER_ITERATION
+        distanceTravelled += BLOCKS_PER_ITERATION; //Keep track of how far we have gone
         //if the distance to store <= 0 we are at the store so pick it up
         if (distanceToStore <= 0) {
             pickupFromStore();
@@ -168,7 +177,6 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
         //set our location to the customers house cause we are creepy and just hang there until another order comes in
         this.currentLocation = this.currentDelivery.getOrder().getCustomer().getLocation();
         this.currentDelivery.setDelivered(true);
-        this.available = true;
         Display.outputWithSeparator("Delivered Order #" + this.currentDelivery.getOrder().getOrderNumber() + " at time index: " + clockTickerInstance.getSimulatorClock()
                 + "\nDriver Name: " + this.driverName
                 + "\nRefrigerated: " + this.currentDelivery.getRefergerated()
@@ -178,11 +186,15 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
                 + "\nTotal time: " + this.currentDelivery.getDeliveredTime()
                 + "\nFrom: " + this.currentDelivery.getOrder().getStore().getName()
                 + "\nOrder Contents: " + this.currentDelivery.getOrder().getOrderItems());
+        //add to the delivered orders list.
+        Dispatch.addDeliveredOrders(this.currentDelivery.getOrder());
         this.currentDelivery = null;
         //set to -1 to indicate not in use
         this.distanceStoreToCustomer = -1;
         this.distanceToStore = -1;
         this.distanceTravelled = 0;
+        this.available = true;
+
 
     }
 
@@ -202,9 +214,10 @@ public class DeliveryDriver implements Observer, Runnable, DeliveryVehicle {
             returnString += "\nCurrent distance to Customer: " + (this.distanceStoreToCustomer + this.distanceToStore) + " blocks.";
         if (this.distanceToStore > 0)
             returnString += "\nDistance to store for pickup: " + this.distanceToStore + " blocks.";
-        if(this.currentDelivery != null)
+        if(this.currentDelivery != null) {
             returnString += "\nCurrently delivering Order #" + this.currentDelivery.getOrder().getOrderNumber()
-                    +" \n" + this.currentDelivery.getOrder().toString();
+                    + " \n" + this.currentDelivery.getOrder().toString();
+        }
 
         return returnString;
     }

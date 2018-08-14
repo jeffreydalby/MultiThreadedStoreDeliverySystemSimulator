@@ -13,6 +13,13 @@ public class Customer {
     public String getCustomerName() {
         return customerName;
     }
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
 
     private String address; //derived from the location
     private Point location; //a point on a 10,000 x 10,000 unit grid
@@ -27,6 +34,7 @@ public class Customer {
 
     private String customerName; //Name
 
+    private String note = "";
     public void setBirthDay(boolean birthDay) {
         this.birthDay = birthDay;
     }

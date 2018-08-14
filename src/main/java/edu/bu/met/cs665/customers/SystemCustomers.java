@@ -13,9 +13,10 @@ public class SystemCustomers {
         return customers;
     }
 
-    private List<Customer> customers = new ArrayList<>();
+    private List<Customer> customers;
 
     private SystemCustomers() {
+        customers = new ArrayList<>();
     }
 
     public void addCustomer(Customer customer) {

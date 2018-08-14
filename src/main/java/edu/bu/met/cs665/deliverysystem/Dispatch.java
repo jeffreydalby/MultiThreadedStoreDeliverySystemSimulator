@@ -29,8 +29,14 @@ public class Dispatch implements Subject, Runnable {
     }
 
     private static volatile Map<String, DeliveryVehicle> driverMap = new HashMap<>();
-    private static Deque<Order> orders = new ArrayDeque<>(); //deque to hold the orders
-    private static List<Delivery> deliveryList = new ArrayList<>(); //list to hold deliveries as they are created
+    private static volatile Deque<Order> orders = new ArrayDeque<>(); //deque to hold the orders
+    private static volatile List<Delivery> deliveryList = new ArrayList<>(); //list to hold deliveries as they are created
+
+    static synchronized void addDeliveredOrders(Order deliveredOrder) {
+        Dispatch.deliveredOrders.add(deliveredOrder);
+    }
+
+    private static volatile List<Order> deliveredOrders = new ArrayList<>();
 
     private Dispatch() {
         this.dispatchThread = new Thread(this);
@@ -84,10 +90,9 @@ public class Dispatch implements Subject, Runnable {
     @Override
     public void notifyAllObservers() {
         //go through each registered driver and ask for an update
-        try{
-        driverMap.values().forEach(theDriver -> ((Observer) theDriver).updateStatus());
-        }
-        catch (ConcurrentModificationException ex){
+        try {
+            driverMap.values().forEach(theDriver -> ((Observer) theDriver).updateStatus());
+        } catch (ConcurrentModificationException ex) {
             //just means we are currently still adding drivers
             Display.output("Drivers still being added to system, updates will be available after all drivers have been added.");
         }
@@ -103,11 +108,7 @@ public class Dispatch implements Subject, Runnable {
             //outputWithSeparator an update of the current dispatch summary
             displayDispatchSummary();
             //process the next order, if we are out of orders break out of the loop
-
-            if (processNextOrder()) break;
-            //display an update from all of our drivers
-            this.notifyAllObservers();
-            //take a nap to let things process
+            //take a nap to let things processand show the summary
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException ex) {
@@ -115,29 +116,39 @@ public class Dispatch implements Subject, Runnable {
                 //reset thread so while loop catches it
                 Thread.currentThread().isInterrupted();
             }
+            //process until we have no more orders
+            if (processNextOrder()) break;
+
+            //display an update from all of our drivers
+            this.notifyAllObservers();
+
 
         }
     }
 
-    private boolean processNextOrder() {
+    private synchronized boolean processNextOrder() {
         DeliveryDriver driver;
-        //check for order in the queue and at least one available driver
-        if (!orders.isEmpty() && driverMap.values().stream().anyMatch(DeliveryVehicle::isAvailable)) {
-            Order nextOrder = orders.removeFirst();
-            //get a driver
-            driver = getNearestAvailableDriver(nextOrder);
+        //check for order in the queue and at least one available driver since things could have changed
 
-            if (driver != null) {
-                //let people know we have a traffic event
-                if (isItRushHour() && nextOrder.isNeedsCold())
-                    Display.outputWithSeparator("Traffic event, routing refrigerated truck.");
-                //create the delivery and notify the driver
-                createDelivery(driver, nextOrder, isItRushHour() && nextOrder.isNeedsCold());
-            }
-            //no driver matches so the poor person gets their order sent to the bottom of the queue
-            //consider implementing a priority queue so we can bubble things up to the top
-            else {
-                orders.addLast(nextOrder);
+        if (!orders.isEmpty() && driverMap.values().stream().anyMatch(DeliveryVehicle::isAvailable)) {
+            for (int i = 0; i < orders.size(); i++) {
+
+                Order nextOrder = orders.removeFirst();
+                //get a driver
+                driver = getNearestAvailableDriver(nextOrder);
+
+                if (driver != null) {
+                    //let people know we have a traffic event
+                    if (isItRushHour() && nextOrder.isNeedsCold())
+                        Display.outputWithSeparator("Traffic event, routing refrigerated truck.");
+                    //create the delivery and notify the driver
+                    createDelivery(driver, nextOrder, isItRushHour() && nextOrder.isNeedsCold());
+                }
+                //no driver matches so the poor person gets their order sent to the bottom of the queue
+                //consider implementing a priority queue so we can bubble things up to the top
+                else {
+                    orders.addLast(nextOrder);
+                }
             }
 
         } else if (orders.isEmpty()) {
@@ -150,12 +161,14 @@ public class Dispatch implements Subject, Runnable {
             }
 
         }
+
         return false;
     }
 
     private void displayDispatchSummary() {
         Display.outputWithSeparator("Dispatch Update:"
-                + "\nNumber of orders: " + orders.size()
+                + "\nNumber of orders waiting to dispatch: " + orders.size()
+                + "\nNumber of orders delivered: " + deliveredOrders.size()
                 + "\nDrivers Waiting on Assignment: " + driverMap.values().stream().filter(DeliveryVehicle::isAvailable).count()
                 + "\nCurrently Rush hour: " + isItRushHour());
     }
@@ -167,7 +180,7 @@ public class Dispatch implements Subject, Runnable {
      * @param order-    the order to be delivered
      * @param rushHour- was the order created during a traffic event (rush hour)
      */
-    private void createDelivery(DeliveryDriver driver, Order order, boolean rushHour) {
+    private synchronized void createDelivery(DeliveryDriver driver, Order order, boolean rushHour) {
         Delivery newDelivery = new Delivery(driver, order);
         newDelivery.setRefergerated(rushHour);
         deliveryList.add(newDelivery);
@@ -182,7 +195,7 @@ public class Dispatch implements Subject, Runnable {
      * @param order - the order we are trying to handle
      * @return -nearest available delivery driver
      */
-    private DeliveryDriver getNearestAvailableDriver(Order order) {
+    private synchronized DeliveryDriver getNearestAvailableDriver(Order order) {
         DeliveryDriver returnDriver = null;
         //initialize to max so we know we'll get the closest
         double closestValue = Double.MAX_VALUE;
