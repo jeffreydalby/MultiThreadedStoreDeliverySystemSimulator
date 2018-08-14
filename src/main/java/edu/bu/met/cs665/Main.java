@@ -1,31 +1,31 @@
 package edu.bu.met.cs665;
 
-import org.apache.log4j.Logger;
-import edu.bu.met.cs665.example1.Person;
+import edu.bu.met.cs665.Display.MenuSystem;
+import edu.bu.met.cs665.simulator.PrimarySimulator;
 
 public class Main {
 
-  private static Logger logger = Logger.getLogger(Main.class);
+    /**
+     * A main method to run examples.
+     *
+     * @param args not used
+     */
+    public static void main(String[] args) {
 
 
-  /**
-   * A main method to run examples.
-   * 
-   * @param args not used
-   */
-  public static void main(String[] args) {
-    Main m = new Main();
+        //the simulation is started by PrimarySimulator and allows for any of the parameters to be changed
+        //create and start up the simulator
+        MenuSystem menu = new MenuSystem();
+        menu.displayWelcome();
+        PrimarySimulator primarySimulator = new PrimarySimulator();
+        primarySimulator.createSimulation(menu.requestNumStores(),
+                menu.requestNumDrivers(),
+                menu.requestNumCustomers(),
+                menu.requestNumOrders(),
+                menu.requestTimeBetweenOrders(),
+                menu.requestNumThreads());
 
-    logger.info(m.doIt());
-
-
-  }
-
-
-
-  private String doIt() {
-    Person student = new Person("John", "Doe");
-    return student.getLastName() + ',' + student.getLastName();
-  }
+    }
 
 }
+
